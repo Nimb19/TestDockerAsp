@@ -16,25 +16,17 @@ if (app.Environment.IsDevelopment())
     db.Database.EnsureCreated();
 }
 
-app.MapGet("/", (HttpResponse response) => response.Redirect("/coin", true, true));
-app.MapGet("/coin", async (TestDockerAspDb db) => await db.Coins.ToListAsync())
-    ; // .Produces<List<Coin>>(StatusCodes.Status200OK)
-    // .WithName("GetAllCoins")
+app.MapGet("/", (HttpResponse response) => response.Redirect("/swagger/index.html", true, true));
+app.MapGet("/coin", async (TestDockerAspDb db) => await db.Coins.ToListAsync());
 
 app.MapGet("/coin/{uid}", async (Guid uid, TestDockerAspDb db) =>
-    await db.Coins.FirstOrDefaultAsync(x => x.Id == uid) is Coin coin ? Results.Ok() : Results.NoContent())
-    .Produces<Coin>(StatusCodes.Status200OK)
-    .Produces(StatusCodes.Status204NoContent)
-    .WithName("GetCoin");
+    await db.Coins.FirstOrDefaultAsync(x => x.Id == uid) is Coin coin ? Results.Ok(coin) : Results.NoContent());
 
 app.MapPost("/coin", async ([FromBody] Coin coin, TestDockerAspDb db) => {
     await db.Coins.AddAsync(coin);
     await db.SaveChangesAsync();
     return Results.Created($"/coin/{coin.Id}", coin);
-})
-    ; // .Accepts<Coin>("application/json")
-    //.Produces<Coin>(StatusCodes.Status201Created)
-    //.WithName("CreateCoin")
+});
 
 app.MapPut("/coin/", async ([FromBody] Coin coin, TestDockerAspDb db) =>
 {
@@ -59,11 +51,7 @@ app.MapDelete("/coin/{uid}", async (Guid uid, TestDockerAspDb db) =>
     db.Coins.Remove(fcoin);
     await db.SaveChangesAsync();
     return Results.Ok();
-})
-    .Produces(StatusCodes.Status200OK)
-    .Produces(StatusCodes.Status404NotFound)
-    .WithName("DeleteCoin");
+});
 
 app.UseHttpsRedirection();
-
 app.Run();
